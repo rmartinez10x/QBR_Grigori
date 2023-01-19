@@ -43,7 +43,7 @@ steps:
     -settings /tmp/soatestcli.properties \
     -import /tmp/$(soatest.project); \
     soatestcli \
-    -resource /tmp/$(soatest.project) \
+    -resource /$(soatest.project) \
     -config 'user://Example Configuration' \
     -settings /tmp/soatestcli.properties \
     -report /tmp"
