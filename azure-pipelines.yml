@@ -57,5 +57,5 @@ steps:
   
   displayName: Publish SOAtest Test Results
   inputs:
-    testRunner: 'SOAtest9x''
+    testRunner: 'SOAtest9x'
     testResultsFiles: '$(Build.Repository.LocalPath)/tmp/rep*.xml'
