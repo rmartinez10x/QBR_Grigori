@@ -1,19 +1,61 @@
 # Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
+# Pull from Repo
+# Import Project into Docekr SOAtest CLI container and Run
+# Azure YAML docs:
 # https://aka.ms/yaml
 
 trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
+# Build Stage 
+# Deploy Stage
+# Test Stage
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    # Create Mount point
+    mkdir tmp
+    cp -R . tmp/$(soatest.project)
+    
+    # Create properties file
+    echo $"
+    license.network.auth.enabled=true  
+    license.network.password=$(license.server.password)
+    license.network.url=$(license.server.url)
+    license.network.use.specified.server=true
+    license.network.user=admin
+    soatest.license.network.edition=automation_edition
+    soatest.license.use_network=true
+    virtualize.license.network.edition=performance_server_edition
+    virtualize.license.use_network=true" >> tmp/soatestcli.properties
+
+
+    # Start and Run SOAtest Container with Import and Run Tests
+    docker run -i \
+    -u 0:0 \
+    -e ACCEPT_EULA=true \
+    -v "$(pwd)/tmp:/tmp" \
+    parasoft/soavirt /bin/bash -c " \
+    cat /tmp/soatestcli.properties; \
+    soatestcli \
+    -settings /tmp/soatestcli.properties \
+    -import /tmp/$(soatest.project); \
+    soatestcli \
+    -resource /$(soatest.project) \
+    -config 'user://Example Configuration' \
+    -settings /tmp/soatestcli.properties \
+    -report /tmp"
+    
+  displayName: Run SOAtest Tests
+  env:
+    pwd: $(Build.Repository.LocalPath)
+  
+# Publish Test Results
+- task: PublishParasoftTestResults@1
+  
+  displayName: Publish SOAtest Test Results
+  inputs:
+    testRunner: 'SOAtest9x'
+    testResultsFiles: '$(Build.Repository.LocalPath)/tmp/rep*.xml'
